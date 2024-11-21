@@ -3,6 +3,9 @@
 #include <time.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include "checkGameField.c"
+#include "checkPlayersMoveError.c"
+#include "printActions.c"
 
 #define SYMBOL_X 'X'
 #define SYMBOL_O 'O'
@@ -18,23 +21,6 @@ void clear_buffer(void)
 
   while ((ch = getchar()) != EOF && ch != '\n')
     ;
-}
-
-void print_welcome(void)
-{
-  putchar('\n');
-  puts("   W E L C O M E   ");
-  printf(" _____ _____ _____\n|     |     |     |\n|  T  |  I  |  C  |\n|_____|_____|_____|\n|     |     |     |\n|  T  |  A  |  C  |\n|_____|_____|_____|\n|     |     |     |\n|  T  |  O  |  E  |\n|_____|_____|_____|\n\n");
-}
-
-void separator(void)
-{
-  puts("<~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~>\n");
-}
-
-void players_move_error_message(char is_row, char is_less)
-{
-  printf("The %s index you entered is %s than possible.\n", !is_row ? "ROW" : "COLUMN", !is_less ? "LESS" : "GREATER");
 }
 
 char get_player_symbol(void)
@@ -60,129 +46,15 @@ char get_player_symbol(void)
         player_symbol = SYMBOL_O;
       }
 
-      separator();
+      print_separator();
       return symbol;
     }
   }
 }
 
-void print_game_field(void)
-{
-  printf(" _____ _____ _____\n|     |     |     |\n|  %c  |  %c  |  %c  |\n|_____|_____|_____|\n|     |     |     |\n|  %c  |  %c  |  %c  |\n|_____|_____|_____|\n|     |     |     |\n|  %c  |  %c  |  %c  |\n|_____|_____|_____|\n\n", game_field[0][0], game_field[0][1], game_field[0][2], game_field[1][0], game_field[1][1], game_field[1][2], game_field[2][0], game_field[2][1], game_field[2][2]);
-  separator();
-}
-
 char get_num(char in_num)
 {
   return in_num ? rand() % in_num : in_num;
-}
-
-bool is_field_valid(char symbol, char value, char index)
-{
-  if ((!symbol || symbol == value) && value != ' ')
-  {
-    symbol = value;
-  }
-  else
-  {
-    return false;
-  }
-
-  if (index == 2)
-  {
-    print_game_field();
-    symbol == player_symbol ? printf("You WIN!\n") : printf("You lose...\n");
-    return true;
-  }
-}
-
-bool check_game_field_horizon_vertical(char row)
-{
-  char current_symbol;
-
-  for (char row_index = 0; row_index < 3; row_index++)
-  {
-    current_symbol = game_field[!row ? row_index : 0][!row ? 0 : row_index];
-
-    for (char col_index = 0; col_index < 3; col_index++)
-    {
-      char current_value = game_field[!row ? row_index : col_index][!row ? col_index : row_index];
-
-      if ((!current_symbol || current_symbol == current_value) && current_value != ' ')
-      {
-        current_symbol = current_value;
-      }
-      else
-      {
-        break;
-      }
-
-      if (col_index == 2)
-      {
-        print_game_field();
-        current_symbol == player_symbol ? printf("You WIN!\n") : printf("You lose...\n");
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-bool check_game_field_left_to_right(void)
-{
-  char current_symbol = game_field[0][0];
-
-  for (char i = 0; i < 3; i++)
-  {
-    char current_value = game_field[i][i];
-
-    if ((!current_symbol || current_symbol == current_value) && current_value != ' ')
-    {
-      current_symbol = current_value;
-    }
-    else
-    {
-      break;
-    }
-
-    if (i == 2)
-    {
-      print_game_field();
-      current_symbol == player_symbol ? printf("You WIN!\n") : printf("You lose...\n");
-      return true;
-    }
-  }
-
-  return false;
-}
-
-bool check_game_field_right_to_left(void)
-{
-  char current_symbol = game_field[0][2];
-
-  for (char i = 0; i < 3; i++)
-  {
-    char current_value = game_field[i][2 - i];
-
-    if ((!current_symbol || current_symbol == current_value) && current_value != ' ')
-    {
-      current_symbol = current_value;
-    }
-    else
-    {
-      break;
-    }
-
-    if (i == 2)
-    {
-      print_game_field();
-      current_symbol == player_symbol ? printf("You WIN!\n") : printf("You lose...\n");
-      return true;
-    }
-  }
-
-  return false;
 }
 
 int main(void)
@@ -192,11 +64,11 @@ int main(void)
   get_player_symbol();
 
   printf("Alright, now your symbol is: %c.\n\n", player_symbol);
-  separator();
+  print_separator();
 
   char is_player_starts = rand() % 2;
   printf("The game starts: %s.\n\n", is_player_starts ? "Player" : "Computer");
-  separator();
+  print_separator();
 
   char current_symbol;
   bool first_move = true;
@@ -216,14 +88,14 @@ int main(void)
 
       if (!first_move)
       {
-        printf("The PLAYER made a move: row - %d, col - %d.\n", player_row, player_col);
+        print_made_moves("PLAYER", player_row, player_col);
       }
 
-      printf("The COMPUTER made a move: row - %d, col - %d.\n", computer_row + 1, computer_col + 1);
+      print_made_moves("COMPUTER", computer_row + 1, computer_col + 1);
 
       game_field[computer_row][computer_col] = computer_symbol;
 
-      print_game_field();
+      print_game_field(game_field);
     }
     else
     {
@@ -242,28 +114,7 @@ int main(void)
         }
         else
         {
-          if (player_row < 1)
-          {
-            players_move_error_message(0, 0);
-          }
-          else if (player_row > 3)
-          {
-            players_move_error_message(0, 1);
-          }
-          else if (player_col < 1)
-          {
-            players_move_error_message(1, 0);
-          }
-          else if ((player_col > 3))
-          {
-            players_move_error_message(1, 1);
-          }
-
-          if (game_field[player_row - 1][player_col - 1] == SYMBOL_O || game_field[player_row - 1][player_col - 1] == SYMBOL_X)
-          {
-            printf("The field at these coordinates is already occupied.\n");
-          }
-
+          check_players_move_error(game_field, player_row, player_col, SYMBOL_O, SYMBOL_X);
           putchar('\n');
           printf("Please try entering other coordinates: ");
         }
@@ -278,7 +129,7 @@ int main(void)
       first_move = false;
     }
 
-    if (moves > 4 && (check_game_field_horizon_vertical(row_check) || check_game_field_horizon_vertical(col_check) || check_game_field_left_to_right() || check_game_field_right_to_left()))
+    if (moves > 4 && (check_game_field_horizon_vertical(game_field, row_check, player_symbol, print_game_field) || check_game_field_horizon_vertical(game_field, col_check, player_symbol, print_game_field) || check_game_field_left_to_right(game_field, player_symbol, print_game_field) || check_game_field_right_to_left(game_field, player_symbol, print_game_field)))
     {
       break;
     }
